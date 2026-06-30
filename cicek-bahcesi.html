@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Bizim Bahçe</title>
+<style>
+  :root{
+    --ink:#3a2b22;
+    --paper:#fff7ec;
+    --paper-2:#ffefdb;
+    --line:#e3c9a8;
+    --rose:#d76d8e;
+    --rose-d:#b9547a;
+    --moss:#6f9c5a;
+    --gold:#e6a93b;
+    --sky:#bfe3ef;
+    --shadow: 0 10px 30px rgba(80,50,30,.18);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Quicksand","Segoe UI",system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(120% 80% at 50% -10%, #ffe9cf 0%, #f6dcc0 45%, #eccfb0 100%);
+    overflow:hidden;
+    -webkit-user-select:none; user-select:none;
+  }
+  #game{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+  }
+  #stage{
+    position:relative;
+    width:min(100vw, calc(100vh*0.5625));
+    height:min(100vh, calc(100vw/0.5625));
+    background:#000;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+  }
+  canvas{
+    position:absolute; inset:0; width:100%; height:100%;
+    image-rendering:pixelated; image-rendering:crisp-edges;
+    display:block;
+  }
+
+  /* ---- top bar ---- */
+  #topbar{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; align-items:center; gap:8px;
+    padding:10px 12px;
+    font-size:13px; font-weight:600;
+    color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+    pointer-events:none;
+    z-index:6;
+  }
+  #whoami{
+    background:rgba(255,255,255,.22);
+    backdrop-filter:blur(4px);
+    border-radius:999px; padding:5px 12px;
+    pointer-events:auto;
+  }
+  #presence{
+    margin-left:auto;
+    background:rgba(255,255,255,.22);
+    backdrop-filter:blur(4px);
+    border-radius:999px; padding:5px 12px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:#9aa;display:inline-block;}
+  .dot.on{background:#7ee08a; box-shadow:0 0 8px #7ee08a;}
+
+  /* floating badges over the canvas */
+  .float{
+    position:absolute; transform:translate(-50%,-100%);
+    background:rgba(255,247,236,.94);
+    color:var(--ink);
+    border:2px solid #fff;
+    border-radius:10px;
+    padding:3px 8px; font-size:11px; font-weight:700;
+    white-space:nowrap; pointer-events:none;
+    box-shadow:0 4px 12px rgba(60,40,25,.25);
+    z-index:5;
+  }
+  #hint{
+    position:absolute; left:50%; bottom:128px; transform:translateX(-50%);
+    background:rgba(58,43,34,.86); color:#fff;
+    padding:8px 14px; border-radius:999px;
+    font-size:13px; font-weight:700; white-space:nowrap;
+    opacity:0; transition:opacity .15s; pointer-events:none; z-index:6;
+  }
+  #hint.show{opacity:1;}
+
+  /* ---- controls ---- */
+  #controls{
+    position:absolute; left:0; right:0; bottom:0;
+    height:120px; z-index:7;
+    pointer-events:none;
+  }
+  #joy{
+    position:absolute; left:18px; bottom:20px;
+    width:96px; height:96px; border-radius:50%;
+    background:rgba(255,255,255,.18);
+    border:2px solid rgba(255,255,255,.35);
+    backdrop-filter:blur(3px);
+    pointer-events:auto; touch-action:none;
+  }
+  #knob{
+    position:absolute; left:50%; top:50%;
+    width:42px; height:42px; border-radius:50%;
+    background:rgba(255,255,255,.9);
+    box-shadow:0 3px 8px rgba(0,0,0,.25);
+    transform:translate(-50%,-50%);
+  }
+  #actBtn{
+    position:absolute; right:20px; bottom:24px;
+    width:78px; height:78px; border-radius:50%;
+    border:3px solid #fff;
+    background:linear-gradient(#ff9bb5,#e0627f);
+    color:#fff; font-size:26px; font-weight:800;
+    box-shadow:0 6px 16px rgba(180,80,110,.45);
+    pointer-events:auto;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .07s;
+  }
+  #actBtn:active{transform:scale(.92);}
+  #actBtn .lbl{font-size:9px;font-weight:700;position:absolute;bottom:9px;}
+
+  /* ---- modals ---- */
+  .scrim{
+    position:absolute; inset:0; z-index:20;
+    background:rgba(40,28,20,.5);
+    backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center;
+    padding:18px;
+  }
+  .scrim.open{display:flex;}
+  .card{
+    width:100%; max-width:420px;
+    max-height:86%; overflow:auto;
+    background:var(--paper);
+    border:3px solid #fff;
+    border-radius:20px;
+    box-shadow:var(--shadow);
+    padding:18px;
+  }
+  .card h2{
+    margin:0 0 4px; font-size:20px; letter-spacing:.2px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .card p.sub{margin:0 0 14px; font-size:13px; color:#8a6f59;}
+  .row{display:flex; gap:10px; flex-wrap:wrap;}
+  .pick{
+    flex:1 1 0; min-width:120px;
+    border:2px solid var(--line); border-radius:16px;
+    background:var(--paper-2); padding:14px; cursor:pointer;
+    text-align:center; transition:transform .08s, border-color .12s;
+  }
+  .pick:active{transform:scale(.97);}
+  .pick.sel{border-color:var(--rose); background:#ffe7ee;}
+  .pick .big{font-size:30px; line-height:1;}
+  .pick .nm{font-weight:700; margin-top:8px; font-size:15px;}
+  .pick .ds{font-size:11px; color:#8a6f59; margin-top:2px;}
+
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    border-radius:14px; padding:12px 16px;
+    font-family:inherit; font-weight:700; font-size:15px;
+    background:var(--rose); color:#fff;
+    box-shadow:0 4px 12px rgba(183,84,122,.35);
+    transition:transform .07s, filter .12s;
+  }
+  .btn:active{transform:scale(.96);}
+  .btn:disabled{filter:grayscale(.6) opacity(.55); box-shadow:none; cursor:default;}
+  .btn.ghost{background:var(--paper-2); color:var(--ink); box-shadow:none; border:2px solid var(--line);}
+  .btn.full{width:100%;}
+  .btn.sm{padding:8px 12px; font-size:13px; border-radius:11px;}
+
+  .vase-list{display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 14px; min-height:54px;
+    background:var(--paper-2); border-radius:14px; padding:10px; border:2px solid var(--line);}
+  .vchip{display:flex; flex-direction:column; align-items:center; font-size:10px; color:#8a6f59; width:46px;}
+  .vchip .em{font-size:24px; line-height:1;}
+  .vchip.wilt{filter:grayscale(.85) opacity(.7);}
+  .empty-note{font-size:13px; color:#a98e76; align-self:center; margin:auto;}
+
+  .inv-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(58px,1fr)); gap:8px; margin:6px 0 4px;}
+  .inv{
+    border:2px solid var(--line); border-radius:12px; background:var(--paper-2);
+    padding:8px 4px; text-align:center; cursor:pointer; position:relative;
+    transition:transform .07s;
+  }
+  .inv:active{transform:scale(.93);}
+  .inv .em{font-size:24px;}
+  .inv .ct{
+    position:absolute; top:-6px; right:-6px;
+    background:var(--rose); color:#fff; font-size:10px; font-weight:800;
+    border-radius:999px; min-width:18px; height:18px; line-height:18px;
+    border:2px solid #fff;
+  }
+  .section-label{font-size:12px; font-weight:800; letter-spacing:.6px; text-transform:uppercase;
+    color:#a98e76; margin:14px 0 4px;}
+
+  /* mailbox */
+  .letters{display:flex; flex-direction:column; gap:10px; margin:4px 0 14px;}
+  .letter{
+    border:2px solid var(--line); border-radius:14px; padding:12px 14px;
+    background:linear-gradient(#fffdf8,#fff4e4); position:relative;
+  }
+  .letter .meta{font-size:11px; color:#a98e76; margin-bottom:5px; display:flex; gap:6px; align-items:center;}
+  .letter .body{font-size:14px; line-height:1.4; white-space:pre-wrap; word-break:break-word;}
+  .from-g{color:var(--rose-d); font-weight:800;}
+  .from-b{color:#3f6fa0; font-weight:800;}
+  textarea{
+    width:100%; min-height:84px; resize:vertical;
+    border:2px solid var(--line); border-radius:14px;
+    padding:12px; font-family:inherit; font-size:14px; color:var(--ink);
+    background:var(--paper-2);
+  }
+  textarea:focus{outline:none; border-color:var(--rose);}
+  .modal-actions{display:flex; gap:10px; margin-top:14px;}
+  .x{margin-left:auto; background:none; border:none; font-size:22px; color:#b79a82; cursor:pointer; line-height:1; padding:0 4px;}
+  .count{font-size:11px; color:#a98e76; text-align:right; margin-top:4px;}
+  .warn{font-size:12px; color:#b9547a; background:#ffe7ee; border-radius:10px; padding:8px 10px; margin-top:10px;}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="stage">
+    <canvas id="cv"></canvas>
+
+    <div id="topbar">
+      <div id="whoami">…</div>
+      <div id="presence"><span class="dot" id="pdot"></span><span id="ptext">yalnız</span></div>
+    </div>
+
+    <div id="vaseBadge" class="float" style="display:none"></div>
+    <div id="mailBadge" class="float" style="display:none"></div>
+    <div id="hint"></div>
+
+    <div id="controls">
+      <div id="joy"><div id="knob"></div></div>
+      <button id="actBtn"><span>A</span><span class="lbl">eylem</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- role select -->
+<div class="scrim" id="roleScrim">
+  <div class="card">
+    <h2>🌿 Bizim Bahçe</h2>
+    <p class="sub">Dağların arasında, şelalenin yanındaki küçük evimiz. Bu cihazda hanginiz oynayacak?</p>
+    <div class="row">
+      <div class="pick" data-role="girl">
+        <div class="big">👧</div>
+        <div class="nm">Ben</div>
+        <div class="ds">kısa boy · kahve dalgalı saç</div>
+      </div>
+      <div class="pick" data-role="boy">
+        <div class="big">🧑</div>
+        <div class="nm">Sevgilim</div>
+        <div class="ds">uzun boy · siyah kıvırcık saç</div>
+      </div>
+    </div>
+    <p class="warn">İkiniz farklı cihazlarda kendinizi seçin. Aynı uygulamaya aynı anda girerseniz birbirinizi bahçede görürsünüz. 💞</p>
+  </div>
+</div>
+
+<!-- vase modal -->
+<div class="scrim" id="vaseScrim">
+  <div class="card">
+    <h2>🏺 Pencere vazosu <button class="x" data-close="vaseScrim">×</button></h2>
+    <p class="sub" id="vaseSub">Bahçeden topladığın çiçekleri buraya koy. Her çiçeğin solma süresi farklıdır.</p>
+    <div class="vase-list" id="vaseList"></div>
+    <div class="section-label">Çantandaki çiçekler</div>
+    <div class="inv-grid" id="invGrid"></div>
+    <p class="empty-note" id="invEmpty" style="display:none">Çantan boş — önce bahçeden çiçek topla 🌱</p>
+    <div class="modal-actions">
+      <button class="btn ghost sm" id="clearWilt">🥀 Solmuşları topla</button>
+    </div>
+  </div>
+</div>
+
+<!-- mailbox modal -->
+<div class="scrim" id="mailScrim">
+  <div class="card">
+    <h2>✉️ Posta kutusu <button class="x" data-close="mailScrim">×</button></h2>
+    <p class="sub">Birbirinize not bırakın. Mektuplar sonsuza dek burada kalır.</p>
+    <div class="letters" id="letters"></div>
+    <div class="section-label">Yeni not</div>
+    <textarea id="noteText" maxlength="500" placeholder="Sevgiline bir şeyler yaz…"></textarea>
+    <div class="count"><span id="noteCount">0</span>/500</div>
+    <div class="modal-actions">
+      <button class="btn full" id="sendNote">Mektubu bırak</button>
+    </div>
+  </div>
+</div>
+
+<script>
+//=================== config / constants ===================
+const VW = 180, VH = 320;            // virtual pixel canvas
+const H = 60*60*1000;                // 1 saat (ms)
+const SIXH = 6*H;                    // varsayılan solma süresi (yedek)
+const SPEED = 46;                    // px/sec walk speed
+const POLL = 1500;                   // ms sync interval
+const PRES_TTL = 9000;               // ms presence considered online
+
+const FLOWER_TYPES = {
+  daisy:{name:"Papatya", em:"🌼"},
+  tulip:{name:"Lale",    em:"🌷"},
+  rose:{ name:"Gül",     em:"🌹"},
+  bell:{ name:"Çançiçeği",em:"🪻"},
+  sun:{  name:"Ayçiçeği", em:"🌻"},
+  lily:{ name:"Zambak",  em:"🌸"},
+};
+const COLORS = {
+  red:"#e0473b", pink:"#f08fb0", orange:"#f2913d", yellow:"#f6d24b",
+  white:"#fdfdfd", purple:"#9b6cd1", blue:"#5b8ff0", magenta:"#d24bb0"
+};
+const COLOR_KEYS = Object.keys(COLORS);
+
+// Her çiçek türünün kendine ait solma süresi (farklı farklı)
+const FLOWER_LIFE = {
+  daisy: 3*H,    // Papatya — çabuk solar
+  tulip: 5*H,    // Lale
+  bell:  4*H,    // Çançiçeği
+  lily:  6*H,    // Zambak
+  rose:  8*H,    // Gül
+  sun:  10*H,    // Ayçiçeği — en uzun dayanan
+};
+// Özel renkli türler: (şekil|renk) -> kendi adı, emojisi ve solma süresi
+const VARIETIES = {
+  "lily|yellow": { name:"Sarı Zambak", em:"🪷", life:9*H },
+  "rose|purple": { name:"Mor Gül",     em:"🌹", life:12*H },
+};
+// Bir çiçek için ad/emoji/solma süresi döndürür
+function flowerKey(f){ return f.shape+"|"+f.color; }
+function flowerInfo(f){
+  const v = VARIETIES[flowerKey(f)];
+  if(v) return v;
+  const base = FLOWER_TYPES[f.shape] || {name:"Çiçek", em:"🌷"};
+  return { name:base.name, em:base.em, life:FLOWER_LIFE[f.shape] || SIXH };
+}
+function isWilted(f){ return (Date.now()-f.at) > flowerInfo(f).life; }
+
+//=================== storage layer ===================
+// Özel (shared=false) veriler bu cihazda localStorage'da; paylaşılan
+// (shared=true) veriler küçük sunucudaki /api/kv uç noktasında tutulur.
+// Orijinal ortamdaki window.storage varsa o kullanılır. Sunucuya
+// ulaşılamazsa veriler belleğe düşer (oyun yine de tek kişilik çalışır).
+const mem = {};
+const HAS = (typeof window!=="undefined" && window.storage && typeof window.storage.get==="function");
+const API = "/api/kv";     // paylaşılan veri uç noktası
+let API_OK = true;         // sunucuya ulaşılamazsa false olur
+async function rawGet(key, shared){
+  if(HAS){
+    try{ const r = await window.storage.get(key, shared); return r ? r.value : null; }
+    catch(e){ return null; } // missing key throws -> null
+  }
+  if(!shared){
+    try{ return localStorage.getItem("cb:"+key); }catch(e){ return ("p:"+key in mem)?mem["p:"+key]:null; }
+  }
+  if(API_OK){
+    try{
+      const r = await fetch(API+"?key="+encodeURIComponent(key), {cache:"no-store"});
+      if(r.ok){ const j = await r.json(); return j.value!=null ? j.value : null; }
+    }catch(e){ API_OK=false; }
+  }
+  return ("s:"+key in mem)?mem["s:"+key]:null;
+}
+async function rawSet(key, val, shared){
+  if(HAS){
+    try{ const r = await window.storage.set(key, val, shared); return !!r; }
+    catch(e){ return false; }
+  }
+  if(!shared){
+    try{ localStorage.setItem("cb:"+key, val); return true; }catch(e){ mem["p:"+key]=val; return true; }
+  }
+  if(API_OK){
+    try{
+      const r = await fetch(API, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({key, value:val})});
+      if(r.ok) return true;
+    }catch(e){ API_OK=false; }
+  }
+  mem["s:"+key]=val; return true;
+}
+async function getJSON(key, shared, def){ const v=await rawGet(key,shared); if(v==null) return def; try{return JSON.parse(v);}catch(e){return def;} }
+async function setJSON(key, val, shared){ return rawSet(key, JSON.stringify(val), shared); }
+
+//=================== state ===================
+const state = {
+  role:null,                 // "girl" | "boy"
+  me:{x:90, y:250, phase:0, moving:false},
+  other:{x:90, y:250, tx:90, ty:250, phase:0, at:0},
+  inv:[],                    // [{shape,color}]
+  vase:{flowers:[]},         // shared
+  mail:{letters:[]},         // shared
+  garden:[],                 // local renewable flowers
+  selInv:null,
+};
+const presKey = ()=> "presence_"+state.role;
+const otherKey = ()=> "presence_"+(state.role==="girl"?"boy":"girl");
+
+//=================== canvas setup ===================
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+let scale=2;
+function sizeCanvas(){
+  const stage=document.getElementById("stage");
+  const w=stage.clientWidth, h=stage.clientHeight;
+  scale=Math.max(1, Math.min(Math.floor(w/VW), Math.floor(h/VH)));
+  if(scale<1) scale=1;
+  cv.width=VW*scale; cv.height=VH*scale;
+}
+window.addEventListener("resize", sizeCanvas);
+
+// draw a crisp virtual-pixel block
+function px(x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(Math.round(x)*scale, Math.round(y)*scale, Math.max(1,Math.round(w))*scale, Math.max(1,Math.round(h))*scale); }
+
+//=================== scenery ===================
+function drawSky(t){
+  const g=ctx.createLinearGradient(0,0,0,VH*scale);
+  g.addColorStop(0,"#aee0ef"); g.addColorStop(.42,"#cdeaf0"); g.addColorStop(.55,"#e8f3e4");
+  ctx.fillStyle=g; ctx.fillRect(0,0,VW*scale,VH*scale);
+  // sun
+  px(150,18,16,16,"#ffe6a0"); px(152,16,12,2,"#fff1c6"); px(148,22,2,8,"#fff1c6"); px(166,22,2,8,"#fff1c6");
+  // clouds drifting
+  const o=(t*0.004)%(VW+40);
+  cloud(20+o-40, 30); cloud(110+o-40, 16);
+  cloud(20+o, 30); cloud(110+o, 16);
+}
+function cloud(x,y){ px(x,y,18,5,"#ffffff"); px(x+4,y-3,12,4,"#ffffff"); px(x+2,y+4,22,3,"#f4fbff"); }
+
+function drawMountains(){
+  // back range
+  for(let i=0;i<3;i++){
+    const bx=[-10,55,118][i], h=[58,72,60][i], w=[90,100,90][i], base=120;
+    const col= i===1?"#8aa8b0":"#9bb6bc";
+    for(let s=0;s<h;s+=4){
+      const ww = Math.round(w*(s/h));
+      px(bx + (w-ww)/2, base - s -4, ww, 5, col);
+    }
+    // snow cap
+    const capw=Math.round(w*0.28);
+    px(bx+(w-capw)/2, base-h, capw, 6, "#f4f9fb");
+    px(bx+(w-capw)/2+3, base-h+5, capw-6, 4, "#f4f9fb");
+  }
+  // grassy hill base
+  px(0,112,VW,12,"#86b46a");
+}
+
+function drawWaterfall(t){
+  // cliff on the right
+  px(138,60,42,96,"#7d6f63");
+  px(138,60,4,96,"#6b5e53");
+  // rock texture
+  for(let i=0;i<6;i++){ px(142+ (i*6)%30, 66+i*14, 8,3,"#6b5e53"); }
+  // water column
+  px(146,62,26,92,"#a9d8ec");
+  const off=(t*0.06)%8;
+  for(let yy=62; yy<154; yy+=8){
+    px(148, yy+off, 4, 4, "#ffffff");
+    px(158, yy+ (off+4)%8, 4, 4, "#d7f0fb");
+    px(166, yy+off, 3, 4, "#ffffff");
+  }
+  // foam top
+  px(146,60,26,4,"#ffffff");
+  // pond
+  px(124,150,56,18,"#9fd2ea");
+  px(124,150,56,4,"#c7e9f6");
+  // ripples
+  for(let i=0;i<5;i++){ const rx=128+i*10; px(rx, 156+((Math.sin((t*0.004)+i)*1.4)|0)+2, 6,1,"#ffffff"); }
+  px(124,164,56,4,"#7cbcd9");
+}
+
+function drawTree(x,base){
+  px(x+3,base-8,3,8,"#7a5a3a");
+  px(x-2,base-18,12,12,"#5c9b4e");
+  px(x,base-22,8,8,"#6aac58");
+  px(x-1,base-14,2,3,"#4f8a43");
+}
+
+function drawHouse(t){
+  const hx=34, base=164, hw=82;
+  // ground shadow
+  px(hx+2, base, hw-4, 3, "rgba(80,60,40,.18)");
+  // walls (logs)
+  px(hx, 116, hw, base-116, "#c79a63");
+  for(let yy=118; yy<base; yy+=6){ px(hx, yy, hw, 1, "#a87f4d"); } // plank lines
+  px(hx,116,3,base-116,"#a87f4d"); px(hx+hw-3,116,3,base-116,"#a87f4d");
+  // roof (stepped triangle)
+  const apex=92;
+  for(let yy=apex; yy<116; yy+=2){
+    const prog=(yy-apex)/(116-apex);
+    const w=Math.round(hw+10)*prog;
+    px(hx + (hw - w)/2 +5*(1-prog)-5, yy, w, 3, "#8a4f3a");
+  }
+  px(hx-4,114,hw+8,4,"#73402f"); // eave
+  // chimney + smoke
+  px(hx+hw-18,96,7,12,"#9a5b44");
+  const so=(t*0.02)%6;
+  px(hx+hw-16, 90-so, 4,4,"rgba(255,255,255,.7)");
+  px(hx+hw-13, 84-so, 5,5,"rgba(255,255,255,.55)");
+  // door
+  px(hx+18,140,16,24,"#7a4d33"); px(hx+18,140,16,2,"#5f3a25");
+  px(hx+30,151,2,2,"#e6c34b"); // knob
+  // window with sill (vase sits here)
+  const wx=70, wy=120, ww=22, wh=18;
+  px(wx-2,wy-2,ww+4,wh+4,"#7a4d33");          // frame
+  px(wx,wy,ww,wh,"#bfe2ef");                   // glass
+  px(wx,wy,ww,wh/2,"#d6eef7");
+  px(wx+ww/2-1,wy,2,wh,"#7a4d33"); px(wx,wy+wh/2-1,ww,2,"#7a4d33"); // muntins
+  px(wx-4, wy+wh, ww+8, 3, "#8a5a3a");         // sill
+  return {wx, wy, ww, wh, sillY: wy+wh, base};
+}
+
+// vase + its flowers drawn on the windowsill
+function drawVase(houseGeom, t){
+  const cx = houseGeom.wx + houseGeom.ww/2;
+  const vy = houseGeom.sillY; // base of vase top sits on sill
+  // bouquet first (behind rim a bit)
+  const flowers = state.vase.flowers;
+  const n = flowers.length;
+  for(let i=0;i<n;i++){
+    const f=flowers[i];
+    const wilted = isWilted(f);
+    const spread = Math.min(8, n);
+    const ix = cx - 7 + (i%spread)*(14/Math.max(1,spread)) + (i%2?0:1);
+    const sway = wilted?0:Math.sin((t*0.003)+i)*0.6;
+    bloom(ix+sway, vy-9 - (i%3), f.shape, f.color, wilted);
+  }
+  // vase body
+  px(cx-5, vy-8, 10, 3, "#cfe0e6");      // rim
+  px(cx-6, vy-6, 12, 8, "#9bc6d6");
+  px(cx-5, vy-6, 2, 8, "#bfe0ec");
+  px(cx-4, vy+2, 8, 2, "#7fb0c2");
+  return {cx, vy};
+}
+
+// small flower bloom: bloom(x,y,shape,color,wilted)
+function bloom(x,y,shape,colorKey,wilted){
+  const c = wilted ? "#b6a98f" : COLORS[colorKey];
+  const cd = wilted ? "#9a8d74" : shade(COLORS[colorKey]);
+  const ctr = wilted ? "#8f8366" : "#f7d24b";
+  x=Math.round(x); y=Math.round(y);
+  switch(shape){
+    case "daisy":
+      px(x-2,y-3,5,5,c); px(x-3,y-1,7,1,c); px(x-2,y+2,5,1,c);
+      px(x,y-1,1,3,ctr); px(x-1,y,3,1,ctr);
+      break;
+    case "tulip":
+      px(x-2,y-4,5,4,c); px(x-2,y-5,1,2,c); px(x,y-6,1,2,c); px(x+2,y-5,1,2,c);
+      px(x-2,y,5,1,cd);
+      break;
+    case "rose":
+      px(x-2,y-3,5,5,c); px(x-1,y-2,3,3,cd); px(x,y-1,1,1,c);
+      break;
+    case "bell":
+      px(x-2,y-4,5,3,c); px(x-1,y-1,3,2,c); px(x,y+1,1,1,cd);
+      break;
+    case "sun":
+      px(x-3,y-3,7,7,wilted?cd:"#f2b63a"); px(x-2,y-2,5,5,ctr); px(x-1,y-1,3,3,"#9a6b2f");
+      break;
+    case "lily":
+      px(x-3,y-2,7,3,c); px(x-1,y-4,3,5,c); px(x,y-1,1,1,ctr);
+      break;
+  }
+}
+
+function shade(hex){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=Math.max(0,r-40);g=Math.max(0,g-40);b=Math.max(0,b-40);
+  return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+
+// garden flower standing in the ground
+function gardenFlower(f){
+  if(!f.present) return;
+  const x=f.x, y=f.y;
+  px(x, y-6, 1, 6, "#3f9d4a");          // stem
+  px(x-2, y-4, 2, 1, "#2f7d38");         // leaf
+  px(x+1, y-3, 2, 1, "#2f7d38");
+  bloom(x, y-8, f.shape, f.color, false);
+}
+
+function drawMailbox(){
+  const x=14, base=210;
+  px(x+4, base-14, 2, 14, "#6b4a32");    // post
+  px(x, base-26, 14, 12, "#c95b73");     // box body
+  px(x, base-26, 14, 3, "#a8455d");      // top
+  px(x+1, base-22, 12, 7, "#e7798f");
+  px(x+10, base-22, 3, 5, "#7a2f42");    // slot
+  // flag
+  px(x+13, base-28, 1, 6, "#7a2f42");
+  px(x+13, base-28, 4, 3, "#e6a93b");
+  px(x-1, base-14, 16, 2, "#6b4a32");
+  return {cx:x+7, base};
+}
+
+//=================== characters ===================
+function shadowEllipse(x,y){ px(x-5,y-1,10,2,"rgba(40,30,20,.16)"); }
+
+function drawGirl(fx,fy,phase,moving){
+  fx=Math.round(fx); fy=Math.round(fy);
+  const cx=fx;
+  const skin="#f4d2b0", hair="#7a5230", hairS="#5e3d22",
+        dress="#e58aaa", dressS="#cf6f92", shoe="#5a4630", eye="#3a2a20";
+  shadowEllipse(cx,fy);
+  const bob = moving && (phase%2)? 1:0;
+  fy-=bob;
+  // legs (skin) — alternate
+  const swap = moving && (phase%2);
+  px(cx-2, fy-5+(swap?0:0), 2, 5, skin);
+  px(cx, fy-5, 2, 5-(swap?1:0), skin);
+  px(cx-2, fy-1, 2, 1, shoe); px(cx, fy-1, 2, 1, shoe);
+  // skirt
+  px(cx-5, fy-7, 10, 2, dress);
+  px(cx-4, fy-10, 8, 3, dress);
+  px(cx-3, fy-13, 6, 3, dress);
+  px(cx-3, fy-7, 10, 1, dressS);
+  // arms
+  px(cx-5, fy-12, 2, 3, skin); px(cx+3, fy-12, 2, 3, skin);
+  // head
+  px(cx-4, fy-22, 8, 8, hair);            // hair block
+  px(cx-3, fy-20, 6, 6, skin);            // face
+  px(cx-3, fy-20, 6, 1, hair);            // bangs
+  px(cx-5, fy-19, 1, 5, hair);            // wavy left
+  px(cx+4, fy-19, 1, 5, hair);            // wavy right
+  px(cx-5, fy-14, 2, 2, hair); px(cx+3, fy-14, 2, 2, hair); // wave curls at jaw
+  px(cx-4, fy-22, 3, 3, hairS);
+  // face details (facing hint via eye shift)
+  const ed = state.faceDir||0;
+  px(cx-2+ed, fy-17, 1, 1, eye); px(cx+1+ed, fy-17, 1, 1, eye);
+  px(cx-1, fy-15, 2, 1, "#c97b7b");
+}
+
+function drawBoy(fx,fy,phase,moving){
+  fx=Math.round(fx); fy=Math.round(fy);
+  const cx=fx;
+  const skin="#d9a878", hair="#241c18", hairH="#3a2c22",
+        shirt="#4f7fb0", shirtS="#3c6391", pants="#3a3530", shoe="#1f1a16", eye="#2a201a";
+  shadowEllipse(cx,fy);
+  const bob = moving && (phase%2)? 1:0; fy-=bob;
+  const swap = moving && (phase%2);
+  // legs (pants) — taller
+  px(cx-4, fy-11, 3, 11-(swap?1:0), pants);
+  px(cx+1, fy-11+(swap?0:0), 3, 11, pants);
+  px(cx-4, fy-1, 3, 1, shoe); px(cx+1, fy-1, 3, 1, shoe);
+  // torso (shirt)
+  px(cx-4, fy-21, 8, 10, shirt);
+  px(cx-4, fy-21, 8, 2, "#5e8fc0");
+  px(cx-4, fy-13, 8, 1, shirtS);
+  // arms
+  px(cx-6, fy-20, 2, 5, shirt); px(cx+4, fy-20, 2, 5, shirt);
+  px(cx-6, fy-15, 2, 2, skin); px(cx+4, fy-15, 2, 2, skin);
+  // head
+  px(cx-4, fy-30, 9, 6, hair);            // hair cap
+  // curls (bumpy top)
+  px(cx-4, fy-31, 2, 1, hair); px(cx-1, fy-31, 2, 1, hair); px(cx+2, fy-31, 2, 1, hair);
+  px(cx-3, fy-30, 1, 1, hairH); px(cx+1, fy-30, 1, 1, hairH);
+  px(cx-3, fy-27, 7, 6, skin);            // face
+  px(cx-4, fy-27, 1, 4, hair); px(cx+3, fy-27, 1, 4, hair); // side hair
+  const ed=state.faceDir||0;
+  px(cx-2+ed, fy-24, 1, 1, eye); px(cx+1+ed, fy-24, 1, 1, eye);
+  px(cx-1, fy-22, 2, 1, "#9a6650");
+}
+
+function drawPerson(role,x,y,phase,moving){
+  if(role==="girl") drawGirl(x,y,phase,moving); else drawBoy(x,y,phase,moving);
+}
+
+//=================== garden generation ===================
+function makeGarden(){
+  const shapes=Object.keys(FLOWER_TYPES);
+  const spots=[];
+  // scatter in foreground, avoid pond (right) and path
+  let i=0;
+  for(let gy=190; gy<=300; gy+=22){
+    for(let gx=16; gx<=164; gx+=26){
+      const jitter=((gx*gy)%9)-4;
+      const x=gx+jitter, y=gy+((gx%14)-6);
+      if(x>120 && y<170) continue;
+      spots.push({
+        x, y,
+        shape: shapes[i%shapes.length],
+        color: COLOR_KEYS[(i*3)%COLOR_KEYS.length],
+        present:true, regrowAt:0
+      });
+      i++;
+    }
+  }
+  // Sarı zambak ve mor gülün bahçede kesin görünmesini sağla
+  const forced=[
+    {shape:"lily", color:"yellow"},  // Sarı Zambak
+    {shape:"rose", color:"purple"},  // Mor Gül
+  ];
+  forced.forEach((v,vi)=>{
+    for(let k=0;k<2 && spots.length;k++){
+      const idx=Math.floor(spots.length*(vi*2+k+1)/5)%spots.length;
+      spots[idx].shape=v.shape; spots[idx].color=v.color;
+    }
+  });
+  state.garden=spots;
+}
+
+//=================== main render ===================
+function render(t){
+  ctx.imageSmoothingEnabled=false;
+  drawSky(t);
+  drawMountains();
+  drawWaterfall(t);
+  // grass foreground
+  px(0,124,VW,VH-124,"#7fb060");
+  px(0,124,VW,4,"#8fc06e");
+  // path to door
+  for(let yy=170; yy<300; yy+=8){ px(56-(yy-170)*0.05, yy, 14+(yy-170)*0.1, 6, "#c7b079"); }
+  drawTree(8,150); drawTree(170,200);
+  const house=drawHouse(t);
+
+  // collect drawables sorted by feet-y for depth
+  const draws=[];
+  for(const f of state.garden){ if(f.present) draws.push({y:f.y, fn:()=>gardenFlower(f)}); }
+  // other player (if online)
+  const online = (Date.now()-state.other.at) < PRES_TTL;
+  if(online){
+    const oRole = state.role==="girl"?"boy":"girl";
+    draws.push({y:state.other.y, fn:()=>drawPerson(oRole, state.other.x, state.other.y, state.other.phase, false), heart:true, x:state.other.x});
+  }
+  // me
+  draws.push({y:state.me.y, fn:()=>drawPerson(state.role, state.me.x, state.me.y, state.me.phase, state.me.moving)});
+  draws.sort((a,b)=>a.y-b.y);
+  for(const d of draws){ d.fn(); if(d.heart){ const hb=(Math.sin(t*0.006)>0); if(hb) px(d.x+4, d.y-34, 3,3,"#ff7aa0"); } }
+
+  const vase=drawVase(house,t);
+  const mb=drawMailbox();
+
+  positionBadges(vase, mb);
+}
+
+//=================== badges & hint ===================
+function stageToScreen(vx,vy){
+  // canvas is 100% of stage; virtual px -> stage px
+  const stage=document.getElementById("stage");
+  const sx = vx/VW * stage.clientWidth;
+  const sy = vy/VH * stage.clientHeight;
+  return {sx, sy};
+}
+function positionBadges(vase, mb){
+  // vase wilt countdown
+  const vb=document.getElementById("vaseBadge");
+  const fresh=state.vase.flowers.filter(f=>!isWilted(f));
+  if(state.vase.flowers.length===0){ vb.style.display="none"; }
+  else{
+    vb.style.display="block";
+    if(fresh.length===0){ vb.textContent="🥀 hepsi soldu"; }
+    else{
+      const soonest=Math.min(...fresh.map(f=> flowerInfo(f).life-(Date.now()-f.at)));
+      vb.textContent="🌸 "+fmtRemain(soonest);
+    }
+    const p=stageToScreen(vase.cx, vase.vy-14);
+    vb.style.left=p.sx+"px"; vb.style.top=p.sy+"px";
+  }
+  // mail badge (count)
+  const mbg=document.getElementById("mailBadge");
+  const n=state.mail.letters.length;
+  if(n>0){ mbg.style.display="block"; mbg.textContent="✉️ "+n;
+    const p=stageToScreen(mb.cx, mb.base-30); mbg.style.left=p.sx+"px"; mbg.style.top=p.sy+"px"; }
+  else mbg.style.display="none";
+}
+function fmtRemain(ms){
+  if(ms<=0) return "soldu";
+  const m=Math.floor(ms/60000);
+  if(m<1) return "<1 dk";
+  if(m<60) return m+" dk";
+  const h=Math.floor(m/60), mm=m%60;
+  return h+" sa "+mm+" dk";
+}
+
+//=================== interaction zones ===================
+function nearVase(){ const m=state.me; return m.x>=70 && m.x<=110 && m.y>=168 && m.y<=190; }
+function nearMail(){ const m=state.me; return m.x>=6 && m.x<=36 && m.y>=190 && m.y<=224; }
+function nearestFlower(){
+  let best=null, bd=12;
+  for(const f of state.garden){
+    if(!f.present) continue;
+    const d=Math.hypot(f.x-state.me.x, (f.y-2)-state.me.y);
+    if(d<bd){bd=d;best=f;}
+  }
+  return best;
+}
+function updateHint(){
+  const h=document.getElementById("hint");
+  let txt=null;
+  if(nearVase()) txt="Vazoya çiçeklerini koyar mısın?";
+  else if(nearMail()) txt="Posta kutusunu aç!";
+  else if(nearestFlower()) txt="Çiçek topla";
+  if(txt){ h.textContent=txt; h.classList.add("show"); }
+  else h.classList.remove("show");
+}
+
+//=================== input ===================
+const keys={};
+let moveVec={x:0,y:0};
+addEventListener("keydown",e=>{ keys[e.key.toLowerCase()]=true; if(e.key===" "||e.key.toLowerCase()==="e"){doAction(); e.preventDefault();} });
+addEventListener("keyup",e=>{ keys[e.key.toLowerCase()]=false; });
+
+// joystick
+const joy=document.getElementById("joy"), knob=document.getElementById("knob");
+let joyId=null;
+function joyStart(e){ joyId=e.pointerId; joy.setPointerCapture(e.pointerId); joyMove(e); }
+function joyMove(e){
+  if(e.pointerId!==joyId) return;
+  const r=joy.getBoundingClientRect();
+  let dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
+  const max=r.width/2-6, d=Math.hypot(dx,dy);
+  if(d>max){ dx=dx/d*max; dy=dy/d*max; }
+  knob.style.left=(50+dx/r.width*100)+"%"; knob.style.top=(50+dy/r.height*100)+"%";
+  moveVec.x = dx/max; moveVec.y = dy/max;
+}
+function joyEnd(e){ if(e.pointerId!==joyId) return; joyId=null; moveVec.x=0; moveVec.y=0; knob.style.left="50%"; knob.style.top="50%"; }
+joy.addEventListener("pointerdown",joyStart);
+joy.addEventListener("pointermove",joyMove);
+joy.addEventListener("pointerup",joyEnd);
+joy.addEventListener("pointercancel",joyEnd);
+
+document.getElementById("actBtn").addEventListener("click",doAction);
+
+function doAction(){
+  if(document.querySelector(".scrim.open")) return;
+  if(nearVase()){ openVase(); return; }
+  if(nearMail()){ openMail(); return; }
+  const f=nearestFlower();
+  if(f){ pickFlower(f); }
+}
+
+//=================== flower picking ===================
+function pickFlower(f){
+  state.inv.push({shape:f.shape, color:f.color});
+  f.present=false; f.regrowAt=Date.now()+8000;
+  saveInv();
+  // tiny pop feedback via hint
+  const h=document.getElementById("hint");
+  h.textContent="🌼 +1 "+flowerInfo(f).name; h.classList.add("show");
+  clearTimeout(pickFlower._t); pickFlower._t=setTimeout(()=>h.classList.remove("show"),700);
+}
+async function saveInv(){ await setJSON("my_inventory", state.inv, false); }
+
+//=================== game loop ===================
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  // input vector
+  let vx=moveVec.x, vy=moveVec.y;
+  if(keys["arrowleft"]||keys["a"]) vx-=1;
+  if(keys["arrowright"]||keys["d"]) vx+=1;
+  if(keys["arrowup"]||keys["w"]) vy-=1;
+  if(keys["arrowdown"]||keys["s"]) vy+=1;
+  const mag=Math.hypot(vx,vy);
+  const blocked = !!document.querySelector(".scrim.open");
+  if(mag>0.15 && !blocked){
+    vx/=Math.max(1,mag); vy/=Math.max(1,mag);
+    state.me.x += vx*SPEED*dt;
+    state.me.y += vy*SPEED*dt;
+    // walkable clamp
+    state.me.x=Math.max(8,Math.min(172,state.me.x));
+    state.me.y=Math.max(168,Math.min(304,state.me.y));
+    state.me.moving=true;
+    state.faceDir = vx>0.1?1:(vx<-0.1?-1:state.faceDir);
+    state.me._anim=(state.me._anim||0)+dt*8;
+    state.me.phase=Math.floor(state.me._anim)%4;
+  } else {
+    state.me.moving=false; state.me.phase=0;
+  }
+  // regrow garden
+  const now2=Date.now();
+  for(const f of state.garden){ if(!f.present && now2>=f.regrowAt) f.present=true; }
+  // lerp other player toward target
+  state.other.x += (state.other.tx-state.other.x)*Math.min(1,dt*6);
+  state.other.y += (state.other.ty-state.other.y)*Math.min(1,dt*6);
+
+  if(state.role){ render(now); updateHint(); }
+  requestAnimationFrame(loop);
+}
+
+//=================== sync ===================
+async function writePresence(){
+  if(!state.role) return;
+  await setJSON(presKey(), {x:Math.round(state.me.x), y:Math.round(state.me.y), phase:state.me.phase, at:Date.now()}, true);
+}
+async function pollSync(){
+  if(!state.role) return;
+  // partner presence
+  const op=await getJSON(otherKey(), true, null);
+  if(op){ state.other.tx=op.x; state.other.ty=op.y; state.other.phase=op.phase||0; state.other.at=op.at||0; }
+  // shared vase + mail
+  state.vase = await getJSON("shared_vase", true, {flowers:[]});
+  state.mail = await getJSON("shared_mailbox", true, {letters:[]});
+  // presence indicator
+  const online=(Date.now()-(state.other.at||0))<PRES_TTL;
+  document.getElementById("pdot").classList.toggle("on",online);
+  document.getElementById("ptext").textContent = online ? "birlikte 💞" : "yalnız";
+  // refresh open modals
+  if(document.getElementById("vaseScrim").classList.contains("open")) renderVase();
+  if(document.getElementById("mailScrim").classList.contains("open")) renderMail();
+}
+
+//=================== modals: vase ===================
+const vaseScrim=document.getElementById("vaseScrim");
+function openVase(){ vaseScrim.classList.add("open"); renderVase(); }
+function renderVase(){
+  const list=document.getElementById("vaseList");
+  list.innerHTML="";
+  const fl=state.vase.flowers;
+  if(fl.length===0){ list.innerHTML='<span class="empty-note">Vazo boş 🌼 Çiçeklerini ekle</span>'; }
+  fl.forEach(f=>{
+    const info=flowerInfo(f);
+    const wilt=isWilted(f);
+    const rem=info.life-(Date.now()-f.at);
+    const c=document.createElement("div");
+    c.className="vchip"+(wilt?" wilt":"");
+    c.title=info.name;
+    c.innerHTML=`<span class="em">${info.em}</span><span>${wilt?"🥀 soldu":fmtRemain(rem)}</span>`;
+    list.appendChild(c);
+  });
+  // inventory grouped
+  const grid=document.getElementById("invGrid");
+  grid.innerHTML="";
+  const groups={};
+  state.inv.forEach(f=>{ const k=f.shape+"|"+f.color; groups[k]=groups[k]||{f, n:0}; groups[k].n++; });
+  const entries=Object.values(groups);
+  document.getElementById("invEmpty").style.display=entries.length?"none":"block";
+  entries.forEach(g=>{
+    const info=flowerInfo(g.f);
+    const b=document.createElement("div"); b.className="inv";
+    b.innerHTML=`<div class="em">${info.em}</div><div class="ct">${g.n}</div>`;
+    b.title=info.name;
+    b.onclick=()=>placeFlower(g.f);
+    grid.appendChild(b);
+  });
+}
+async function placeFlower(f){
+  if(state.vase.flowers.length>=14){ flash("Vazo dolu 🏺"); return; }
+  // remove one from inventory
+  const idx=state.inv.findIndex(x=>x.shape===f.shape && x.color===f.color);
+  if(idx<0) return;
+  state.inv.splice(idx,1); saveInv();
+  // re-fetch latest shared, append, save (reduce overwrite races)
+  const latest=await getJSON("shared_vase", true, {flowers:[]});
+  latest.flowers.push({shape:f.shape, color:f.color, by:state.role, at:Date.now()});
+  if(latest.flowers.length>14) latest.flowers.shift();
+  state.vase=latest;
+  await setJSON("shared_vase", latest, true);
+  renderVase();
+}
+document.getElementById("clearWilt").onclick=async()=>{
+  const latest=await getJSON("shared_vase", true, {flowers:[]});
+  latest.flowers=latest.flowers.filter(f=>!isWilted(f));
+  state.vase=latest; await setJSON("shared_vase", latest, true); renderVase();
+};
+
+//=================== modals: mailbox ===================
+const mailScrim=document.getElementById("mailScrim");
+function openMail(){ mailScrim.classList.add("open"); renderMail(); }
+function renderMail(){
+  const box=document.getElementById("letters"); box.innerHTML="";
+  const ls=[...state.mail.letters].sort((a,b)=>b.at-a.at);
+  if(ls.length===0){ box.innerHTML='<span class="empty-note">Henüz mektup yok ✨ İlkini sen yaz</span>'; }
+  ls.forEach(l=>{
+    const d=new Date(l.at);
+    const who = l.from==="girl" ? '<span class="from-g">👧 Ben</span>' : '<span class="from-b">🧑 Sevgilim</span>';
+    const el=document.createElement("div"); el.className="letter";
+    el.innerHTML=`<div class="meta">${who} · ${d.toLocaleDateString("tr-TR")} ${d.toLocaleTimeString("tr-TR",{hour:'2-digit',minute:'2-digit'})}</div><div class="body"></div>`;
+    el.querySelector(".body").textContent=l.text;
+    box.appendChild(el);
+  });
+}
+const noteText=document.getElementById("noteText");
+noteText.addEventListener("input",()=>{ document.getElementById("noteCount").textContent=noteText.value.length; });
+document.getElementById("sendNote").onclick=async()=>{
+  const txt=noteText.value.trim(); if(!txt) return;
+  const latest=await getJSON("shared_mailbox", true, {letters:[]});
+  latest.letters.push({from:state.role, text:txt, at:Date.now()});
+  state.mail=latest; await setJSON("shared_mailbox", latest, true);
+  noteText.value=""; document.getElementById("noteCount").textContent="0";
+  renderMail();
+};
+
+// close buttons
+document.querySelectorAll("[data-close]").forEach(b=>{
+  b.onclick=()=>document.getElementById(b.dataset.close).classList.remove("open");
+});
+// click scrim background to close
+document.querySelectorAll(".scrim").forEach(s=>{
+  s.addEventListener("click",e=>{ if(e.target===s && s.id!=="roleScrim") s.classList.remove("open"); });
+});
+
+function flash(msg){ const h=document.getElementById("hint"); h.textContent=msg; h.classList.add("show"); clearTimeout(flash._t); flash._t=setTimeout(()=>h.classList.remove("show"),900); }
+
+//=================== role select + boot ===================
+document.querySelectorAll("#roleScrim .pick").forEach(p=>{
+  p.onclick=async()=>{
+    state.role=p.dataset.role;
+    await rawSet("my_role", state.role, false);
+    document.getElementById("whoami").textContent = state.role==="girl" ? "👧 Ben" : "🧑 Sevgilim";
+    document.getElementById("roleScrim").classList.remove("open");
+    state.me.x = state.role==="girl"?70:110; state.me.y=250;
+    await pollSync(); await writePresence();
+  };
+});
+
+async function boot(){
+  sizeCanvas();
+  makeGarden();
+  state.inv = await getJSON("my_inventory", false, []);
+  const r = await rawGet("my_role", false);
+  if(r){ state.role=r; document.getElementById("whoami").textContent = r==="girl"?"👧 Ben":"🧑 Sevgilim";
+         state.me.x=r==="girl"?70:110; state.me.y=250; }
+  else { document.getElementById("roleScrim").classList.add("open"); }
+
+  await pollSync();
+  if(!HAS && !API_OK){
+    flash("Sunucuya ulaşılamadı — paylaşım çevrimdışı olabilir");
+  }
+  setInterval(pollSync, POLL);
+  setInterval(writePresence, POLL);
+  requestAnimationFrame(loop);
+}
+boot();
+</script>
+</body>
+</html>

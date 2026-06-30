@@ -1,0 +1,12 @@
+{
+  "name": "bizim-bahce",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bizim Bahçe — sevgililer için online piksel bahçe oyunu",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
