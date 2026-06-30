@@ -1,0 +1,8 @@
+# Paylaşılan oyun verisi — ASLA commit etme.
+# Commit edersen her deploy'da canlı veriyi eski haline döndürür
+# (mektuplar/çiçekler sıfırlanır). Kalıcılık için kalıcı disk kullan (OKU-BENI.md).
+data.json
+
+# Node
+node_modules/
+npm-debug.log*

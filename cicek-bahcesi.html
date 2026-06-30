@@ -219,6 +219,9 @@
   }
   .letter .meta{font-size:11px; color:#a98e76; margin-bottom:5px; display:flex; gap:6px; align-items:center;}
   .letter .body{font-size:14px; line-height:1.4; white-space:pre-wrap; word-break:break-word;}
+  .letter .del{margin-left:auto; background:none; border:none; cursor:pointer;
+    font-size:14px; line-height:1; color:#b79a82; padding:2px 4px; border-radius:8px; transition:transform .07s;}
+  .letter .del:active{transform:scale(.88);}
   .from-g{color:var(--rose-d); font-weight:800;}
   .from-b{color:#3f6fa0; font-weight:800;}
   textarea{
@@ -266,6 +269,30 @@
   .care-lbl{font-weight:800; font-size:15px;}
   .care-stat{font-size:12px; color:#8a6f59; margin-left:auto; text-align:right;}
   .care-stat.empty{color:#b9547a; font-weight:700;}
+
+  /* ---- ev plakası (okunaklı ama göze batmayan) ---- */
+  #plate{
+    position:absolute; transform:translate(-50%,-50%);
+    background:#eef1f4; color:#222831;
+    font-family:"Baloo 2",system-ui,monospace; font-weight:800;
+    font-size:9px; letter-spacing:.4px; line-height:1;
+    padding:1px 4px; border:1px solid #aeb6c2; border-radius:3px;
+    border-left:4px solid #2f6bd6;           /* TR plaka mavi şeridi */
+    white-space:nowrap; pointer-events:none; z-index:4; opacity:.82;
+    box-shadow:0 1px 2px rgba(0,0,0,.18);
+  }
+
+  /* ---- öpücük efekti ---- */
+  .kiss{
+    position:absolute; transform:translate(-50%,-50%);
+    font-size:22px; pointer-events:none; z-index:8;
+    animation:kissFloat 1.5s ease-out forwards;
+  }
+  @keyframes kissFloat{
+    0%{opacity:0; transform:translate(-50%,-50%) scale(.4);}
+    20%{opacity:1; transform:translate(-50%,-95%) scale(1.15);}
+    100%{opacity:0; transform:translate(-50%,-230%) scale(1);}
+  }
 </style>
 </head>
 <body>
@@ -280,6 +307,7 @@
 
     <div id="vaseBadge" class="float" style="display:none"></div>
     <div id="mailBadge" class="float" style="display:none"></div>
+    <div id="plate" style="display:none">34 OZ 3861</div>
     <div id="hint"></div>
 
     <div id="controls">
@@ -551,13 +579,10 @@ function drawMountains(){
     const bx=[-10,55,118][i], h=[58,72,60][i], w=[90,100,90][i], base=120;
     const col= i===1?"#8aa8b0":"#9bb6bc";
     for(let s=0;s<h;s+=4){
-      const ww = Math.round(w*(s/h));
-      px(bx + (w-ww)/2, base - s -4, ww, 5, col);
+      const ww = Math.round(w*(1 - s/h));   // tabanda geniş, tepede dar (düz durur)
+      const snow = s >= h-12;               // tepe kısmı karlı
+      px(bx + (w-ww)/2, base - s - 4, ww, 5, snow ? "#f4f9fb" : col);
     }
-    // snow cap
-    const capw=Math.round(w*0.28);
-    px(bx+(w-capw)/2, base-h, capw, 6, "#f4f9fb");
-    px(bx+(w-capw)/2+3, base-h+5, capw-6, 4, "#f4f9fb");
   }
   // grassy hill base
   px(0,112,VW,12,"#86b46a");
@@ -954,6 +979,10 @@ function stageToScreen(vx,vy){
   return {sx, sy};
 }
 function positionBadges(vase, mb){
+  // ev plakası — sabit, evin duvarında (kapının üstü, pencerenin solu)
+  const pl=document.getElementById("plate");
+  const pp=stageToScreen(52,127);
+  pl.style.left=pp.sx+"px"; pl.style.top=pp.sy+"px"; pl.style.display="block";
   // vase wilt countdown
   const vb=document.getElementById("vaseBadge");
   const fresh=state.vase.flowers.filter(f=>!isWilted(f));
@@ -988,6 +1017,11 @@ function fmtRemain(ms){
 function nearVase(){ const m=state.me; return m.x>=70 && m.x<=110 && m.y>=168 && m.y<=190; }
 function nearMail(){ const m=state.me; return m.x>=6 && m.x<=36 && m.y>=190 && m.y<=224; }
 function nearCats(){ const m=state.me; return m.x>=92 && m.x<=146 && m.y>=184 && m.y<=214; }
+function nearPartner(){
+  const online=(Date.now()-(state.other.at||0))<PRES_TTL;
+  if(!online) return false;
+  return Math.hypot(state.other.x-state.me.x, state.other.y-state.me.y) < 18;
+}
 function nearestFlower(){
   let best=null, bd=12;
   for(const f of state.garden){
@@ -1003,6 +1037,7 @@ function updateHint(){
   if(nearVase()) txt="Vazoya çiçeklerini koyar mısın?";
   else if(nearMail()) txt="Posta kutusunu aç!";
   else if(nearCats()) txt="🐾 Mama & su doldur";
+  else if(nearPartner()) txt="💋 Sevgilini öp";
   else if(nearestFlower()) txt="Çiçek topla";
   if(txt){ h.textContent=txt; h.classList.add("show"); }
   else h.classList.remove("show");
@@ -1046,8 +1081,27 @@ function doAction(){
   if(nearVase()){ openVase(); return; }
   if(nearMail()){ openMail(); return; }
   if(nearCats()){ openCare(); return; }
+  if(nearPartner()){ kiss(); return; }
   const f=nearestFlower();
   if(f){ pickFlower(f); }
+}
+
+// Sevgiliyi öp — ikinizin ortasında öpücükler belirir, 1.5 sn sonra silinir
+function kiss(){
+  const stage=document.getElementById("stage");
+  const mx=(state.me.x+state.other.x)/2, my=(state.me.y+state.other.y)/2 - 16;
+  for(let i=0;i<7;i++){
+    const s=document.createElement("div");
+    s.className="kiss"; s.textContent= i%2 ? "💋" : "❤️";
+    const p=stageToScreen(mx, my);
+    s.style.left=(p.sx + (Math.random()*64-32))+"px";
+    s.style.top=(p.sy + (Math.random()*24-12))+"px";
+    s.style.animationDelay=(Math.random()*0.25)+"s";
+    s.style.fontSize=(16+Math.random()*12)+"px";
+    stage.appendChild(s);
+    setTimeout(()=>s.remove(), 1700);   // animasyon 1.5sn + gecikme payı
+  }
+  flash("💞 öptün!");
 }
 
 //=================== flower picking ===================
@@ -1212,8 +1266,23 @@ function renderMail(){
     const el=document.createElement("div"); el.className="letter";
     el.innerHTML=`<div class="meta">${who} · ${d.toLocaleDateString("tr-TR")} ${d.toLocaleTimeString("tr-TR",{hour:'2-digit',minute:'2-digit'})}</div><div class="body"></div>`;
     el.querySelector(".body").textContent=l.text;
+    const del=document.createElement("button");
+    del.className="del"; del.textContent="🗑"; del.title="Mektubu sil";
+    del.onclick=()=>deleteLetter(l);
+    el.querySelector(".meta").appendChild(del);
     box.appendChild(el);
   });
+}
+// Posta kutusundan bir mektubu sil (paylaşımlı — ikiniz de görür)
+async function deleteLetter(l){
+  if(!confirm("Bu mektubu silmek istediğine emin misin? Bu geri alınamaz.")) return;
+  const latest=await getJSON("shared_mailbox", true, {letters:[]});
+  const i=latest.letters.findIndex(x=>x.at===l.at && x.from===l.from && x.text===l.text);
+  if(i>=0) latest.letters.splice(i,1);
+  state.mail=latest;
+  await setJSON("shared_mailbox", latest, true);
+  renderMail();
+  flash("🗑 mektup silindi");
 }
 const noteText=document.getElementById("noteText");
 noteText.addEventListener("input",()=>{ document.getElementById("noteCount").textContent=noteText.value.length; });

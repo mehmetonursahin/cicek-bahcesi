@@ -45,7 +45,7 @@ için ücretsiz kataloglara kolayca girer. Örnek: **Render.com** (ücretsiz).
    (`cicek-bahcesi.html`, `server.js`, `package.json`, `OKU-BENI.md`).
 2. [render.com](https://render.com) → **New → Web Service** → GitHub deponu seç.
 3. Ayarlar:
-   - **Build Command:** _(boş bırak)_
+   - **Build Command:** `npm install`
    - **Start Command:** `node server.js`
 4. **Deploy** de. Sana `https://...onrender.com` gibi bir adres verir.
    O adresi sevgilinle paylaş; ikiniz de açın. 🎉
@@ -53,15 +53,31 @@ için ücretsiz kataloglara kolayca girer. Örnek: **Render.com** (ücretsiz).
 Aynı mantık **Railway, Replit, Fly.io** gibi yerlerde de geçerli: tek
 gereken `node server.js` komutunu çalıştırması.
 
-### ⚠️ Önemli not — ücretsiz planlarda veri
-Çoğu ücretsiz sunucuda disk **kalıcı değildir**: sunucu yeniden kurulduğunda
-(redeploy) `data.json` sıfırlanabilir, yani vazo ve eski mektuplar silinebilir.
-Mektupların kalıcı olması çok önemliyse:
-- Render’da küçük bir **Persistent Disk** ekle (aylık birkaç dolar), ya da
-- ileride basit bir veritabanına (ör. Firebase/Supabase) geçilebilir — istersen
-  onu da ayarlarım.
+### ⚠️ ÇOK ÖNEMLİ — veri kalıcılığı (mektuplar/çiçekler)
 
-Günlük oynamak için ücretsiz plan genelde yeterli; sadece nadiren sıfırlanabilir.
+**1) `data.json`'ı ASLA commit etme.** (Zaten `.gitignore`'da.)
+Eğer git'e eklersen, her `git push` → her deploy canlı veriyi **commit'teki eski
+hâline döndürür**; yani sevgilinle biriktirdiğiniz mektuplar/çiçekler sıfırlanır.
+İstemediğin tam da bu. Commit etme, sorun olmaz.
+
+**2) Ama tek başına bu yetmez.** Render gibi ücretsiz planlarda disk
+**geçicidir** (ephemeral): sen yeni kod push'ladığında ya da sunucu uyku sonrası
+yeniden kalktığında `data.json` yine **silinir**. Yani "her server update'de
+değişmesin" demek için **kalıcı bir yere** yazman gerekir.
+
+**Kalıcı çözüm (önerilen) — kalıcı disk:**
+Sunucu, `DATA_DIR` ortam değişkenini destekliyor. Render'da:
+1. Servisine bir **Disk** ekle (Mount Path: `/var/data`).
+2. **Environment** kısmına `DATA_DIR = /var/data` ekle.
+3. Artık `data.json` o diske yazılır; deploy/restart'ta **silinmez.** ✅
+
+> Render'da kalıcı disk genelde ücretli plan ister (aylık ~birkaç dolar).
+> Tamamen ücretsiz ve kalıcı istiyorsan, paylaşımı bir veritabanına
+> (Firebase / Supabase / Upstash) taşıyabiliriz — kod buna hazır, istersen ayarlarım.
+
+**Yedek alma:** İstediğin an `https://<adres>/api/kv?key=shared_mailbox` ve
+`...?key=shared_vase` adreslerini açıp çıkan metni bir yere kopyalayarak
+mektupların/çiçeklerin yedeğini elle saklayabilirsin.
 
 ---
 

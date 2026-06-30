@@ -12,7 +12,11 @@ const path = require("path");
 
 const PORT = process.env.PORT || 3000;
 const HTML = path.join(__dirname, "cicek-bahcesi.html");
-const DB   = path.join(__dirname, "data.json");
+// Veri klasörü: kalıcı disk varsa DATA_DIR ile oraya yaz (ör. Render disk: /var/data).
+// Böylece deploy/restart'ta mektuplar ve çiçekler SİLİNMEZ.
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
+const DB   = path.join(DATA_DIR, "data.json");
 
 // --- paylaşılan anahtar-değer deposu (diske yazılır) ---
 let store = {};

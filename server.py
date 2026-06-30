@@ -14,7 +14,10 @@ from urllib.parse import urlparse, parse_qs
 PORT = int(os.environ.get("PORT", "3000"))
 HERE = os.path.dirname(os.path.abspath(__file__))
 HTML = os.path.join(HERE, "cicek-bahcesi.html")
-DB   = os.path.join(HERE, "data.json")
+# Veri klasörü: kalıcı disk varsa DATA_DIR ile oraya yaz (deploy/restart'ta silinmez).
+DATA_DIR = os.environ.get("DATA_DIR", HERE)
+os.makedirs(DATA_DIR, exist_ok=True)
+DB   = os.path.join(DATA_DIR, "data.json")
 
 # --- paylaşılan anahtar-değer deposu (diske yazılır) ---
 _lock = threading.Lock()
