@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Bizim Bahçe</title>
+<title>Bagımız</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --ink:#3a2b22;
@@ -34,8 +37,8 @@
   }
   #stage{
     position:relative;
-    width:min(100vw, calc(100vh*0.5625));
-    height:min(100vh, calc(100vw/0.5625));
+    width:min(100vw, calc(100vh*0.5));
+    height:min(100vh, calc(100vw/0.5));
     background:#000;
     overflow:hidden;
     box-shadow:var(--shadow);
@@ -120,14 +123,13 @@
     width:78px; height:78px; border-radius:50%;
     border:3px solid #fff;
     background:linear-gradient(#ff9bb5,#e0627f);
-    color:#fff; font-size:26px; font-weight:800;
+    color:#fff; font-size:16px; font-weight:800; letter-spacing:.3px;
     box-shadow:0 6px 16px rgba(180,80,110,.45);
     pointer-events:auto;
     display:flex;align-items:center;justify-content:center;
     transition:transform .07s;
   }
   #actBtn:active{transform:scale(.92);}
-  #actBtn .lbl{font-size:9px;font-weight:700;position:absolute;bottom:9px;}
 
   /* ---- modals ---- */
   .scrim{
@@ -148,7 +150,8 @@
     padding:18px;
   }
   .card h2{
-    margin:0 0 4px; font-size:20px; letter-spacing:.2px;
+    margin:0 0 4px; font-size:21px; letter-spacing:.2px;
+    font-family:"Baloo 2","Quicksand",system-ui,sans-serif;
     display:flex; align-items:center; gap:8px;
   }
   .card p.sub{margin:0 0 14px; font-size:13px; color:#8a6f59;}
@@ -181,9 +184,14 @@
 
   .vase-list{display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 14px; min-height:54px;
     background:var(--paper-2); border-radius:14px; padding:10px; border:2px solid var(--line);}
-  .vchip{display:flex; flex-direction:column; align-items:center; font-size:10px; color:#8a6f59; width:46px;}
+  .vchip{display:flex; flex-direction:column; align-items:center; font-size:10px; color:#8a6f59; width:46px;
+    position:relative; cursor:pointer; padding-top:4px; transition:transform .07s;}
+  .vchip:active{transform:scale(.92);}
   .vchip .em{font-size:24px; line-height:1;}
   .vchip.wilt{filter:grayscale(.85) opacity(.7);}
+  .vchip .rm{position:absolute; top:-4px; right:0;
+    background:var(--rose); color:#fff; font-size:11px; font-weight:800; line-height:16px;
+    width:16px; height:16px; border-radius:999px; border:2px solid #fff; text-align:center;}
   .empty-note{font-size:13px; color:#a98e76; align-self:center; margin:auto;}
 
   .inv-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(58px,1fr)); gap:8px; margin:6px 0 4px;}
@@ -216,14 +224,48 @@
   textarea{
     width:100%; min-height:84px; resize:vertical;
     border:2px solid var(--line); border-radius:14px;
-    padding:12px; font-family:inherit; font-size:14px; color:var(--ink);
+    padding:12px; font-family:inherit; font-size:16px; color:var(--ink);
     background:var(--paper-2);
+    -webkit-user-select:text; user-select:text;
   }
   textarea:focus{outline:none; border-color:var(--rose);}
   .modal-actions{display:flex; gap:10px; margin-top:14px;}
   .x{margin-left:auto; background:none; border:none; font-size:22px; color:#b79a82; cursor:pointer; line-height:1; padding:0 4px;}
   .count{font-size:11px; color:#a98e76; text-align:right; margin-top:4px;}
   .warn{font-size:12px; color:#b9547a; background:#ffe7ee; border-radius:10px; padding:8px 10px; margin-top:10px;}
+
+  /* ---- bag button (eylem'in yanında) ---- */
+  #bagBtn{
+    position:absolute; right:104px; bottom:34px;
+    width:56px; height:56px; border-radius:50%;
+    border:3px solid #fff;
+    background:linear-gradient(#ffd89b,#eaa94e);
+    color:#5a3a1e; font-size:24px;
+    box-shadow:0 6px 14px rgba(150,100,40,.4);
+    pointer-events:auto;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .07s;
+  }
+  #bagBtn:active{transform:scale(.92);}
+
+  /* ---- kedi isim etiketleri (net, okunaklı) ---- */
+  .catname{
+    position:absolute; transform:translate(-50%,-100%);
+    background:rgba(58,43,34,.85); color:#fff;
+    font-family:"Baloo 2","Quicksand",system-ui,sans-serif;
+    font-weight:700; font-size:11px; line-height:1;
+    padding:3px 7px; border-radius:9px;
+    white-space:nowrap; pointer-events:none; z-index:5;
+    text-shadow:0 1px 1px rgba(0,0,0,.3);
+    box-shadow:0 2px 6px rgba(40,28,18,.3);
+  }
+
+  /* ---- kedi bakım (mama/su) satırları ---- */
+  .care-row{display:flex; align-items:center; gap:10px; padding:12px;
+    margin-bottom:8px; border:2px solid var(--line); border-radius:14px; background:var(--paper-2);}
+  .care-lbl{font-weight:800; font-size:15px;}
+  .care-stat{font-size:12px; color:#8a6f59; margin-left:auto; text-align:right;}
+  .care-stat.empty{color:#b9547a; font-weight:700;}
 </style>
 </head>
 <body>
@@ -242,7 +284,8 @@
 
     <div id="controls">
       <div id="joy"><div id="knob"></div></div>
-      <button id="actBtn"><span>A</span><span class="lbl">eylem</span></button>
+      <button id="bagBtn" title="Çantam">🎒</button>
+      <button id="actBtn"><span>eylem</span></button>
     </div>
   </div>
 </div>
@@ -250,7 +293,7 @@
 <!-- role select -->
 <div class="scrim" id="roleScrim">
   <div class="card">
-    <h2>🌿 Bizim Bahçe</h2>
+    <h2>🌿 bagımız</h2>
     <p class="sub">Dağların arasında, şelalenin yanındaki küçük evimiz. Bu cihazda hanginiz oynayacak?</p>
     <div class="row">
       <div class="pick" data-role="girl">
@@ -273,6 +316,7 @@
   <div class="card">
     <h2>🏺 Pencere vazosu <button class="x" data-close="vaseScrim">×</button></h2>
     <p class="sub" id="vaseSub">Bahçeden topladığın çiçekleri buraya koy. Her çiçeğin solma süresi farklıdır.</p>
+    <div class="section-label">Vazodaki çiçekler · çıkarmak için dokun</div>
     <div class="vase-list" id="vaseList"></div>
     <div class="section-label">Çantandaki çiçekler</div>
     <div class="inv-grid" id="invGrid"></div>
@@ -280,6 +324,25 @@
     <div class="modal-actions">
       <button class="btn ghost sm" id="clearWilt">🥀 Solmuşları topla</button>
     </div>
+  </div>
+</div>
+
+<!-- bag / inventory modal -->
+<div class="scrim" id="bagScrim">
+  <div class="card">
+    <h2>🎒 Çantam <button class="x" data-close="bagScrim">×</button></h2>
+    <p class="sub">Topladığın çiçekleri burada taşırsın. Yere bırakmak (ekmek) için bir çiçeğe dokun — bulunduğun yere düşer, sonra istersen tekrar toplarsın.</p>
+    <div class="inv-grid" id="bagGrid"></div>
+    <p class="empty-note" id="bagEmpty" style="display:none">Çantan boş — bahçeden çiçek topla 🌱</p>
+  </div>
+</div>
+
+<!-- cat care modal -->
+<div class="scrim" id="careScrim">
+  <div class="card">
+    <h2>🐾 Kedi köşesi <button class="x" data-close="careScrim">×</button></h2>
+    <p class="sub">Miyav Muz ve Psi Koz'un mama ve suyu. Her biri günde bir kez biter; doldurmayı unutmayın 🐱</p>
+    <div id="careRows"></div>
   </div>
 </div>
 
@@ -300,8 +363,9 @@
 
 <script>
 //=================== config / constants ===================
-const VW = 180, VH = 320;            // virtual pixel canvas
+const VW = 180, VH = 360;            // virtual pixel canvas (harita biraz daha büyük)
 const H = 60*60*1000;                // 1 saat (ms)
+const DAY = 24*H;                    // kedi mama/su günde bir biter
 const SIXH = 6*H;                    // varsayılan solma süresi (yedek)
 const SPEED = 46;                    // px/sec walk speed
 const POLL = 1500;                   // ms sync interval
@@ -394,14 +458,62 @@ const state = {
   role:null,                 // "girl" | "boy"
   me:{x:90, y:250, phase:0, moving:false},
   other:{x:90, y:250, tx:90, ty:250, phase:0, at:0},
-  inv:[],                    // [{shape,color}]
+  inv:[],                    // [{shape,color,age?}]
   vase:{flowers:[]},         // shared
   mail:{letters:[]},         // shared
+  care:{food:0,water:0},     // shared — son doldurma zamanları
   garden:[],                 // local renewable flowers
   selInv:null,
 };
 const presKey = ()=> "presence_"+state.role;
 const otherKey = ()=> "presence_"+(state.role==="girl"?"boy":"girl");
+
+// Bahçedeki iki kedi. Miyav Muz erkeği, Psi Koz kızı takip eder;
+// takip edilen oyuncu oyunda değilse o kedi rastgele dolaşır.
+const cats = [
+  { name:"Miyav Muz", follow:"boy",  x:46,  y:300, tx:46,  ty:300, dir:1,  seed:0,
+    body:"#2f2c33", dark:"#16141a", eye:"#a8e05f", belly:null,      stripe:false,
+    moving:false, phase:0, anim:0, wait:1.0, el:null },
+  { name:"Psi Koz",   follow:"girl", x:132, y:308, tx:132, ty:308, dir:-1, seed:2.4,
+    body:"#e08a3c", dark:"#b5662a", eye:"#3a2a20", belly:"#f7e3c8", stripe:true,
+    moving:false, phase:0, anim:0, wait:2.2, el:null },
+];
+// Bir rolün konumunu döndür (kendisi her zaman var; partner sadece online ise)
+function playerPos(role){
+  if(role===state.role) return state.me;
+  const online=(Date.now()-(state.other.at||0))<PRES_TTL;
+  return online ? state.other : null;
+}
+function updateCats(dt){
+  for(const c of cats){
+    const tgt = playerPos(c.follow);
+    if(tgt){                                   // sahibini takip et
+      const dx=tgt.x-c.x, dy=(tgt.y+5)-c.y, d=Math.hypot(dx,dy);
+      if(d>14){
+        const sp=34;                           // takipte biraz daha hızlı
+        c.x += dx/d*sp*dt; c.y += dy/d*sp*dt;
+        c.dir = dx>0.3?1:(dx<-0.3?-1:c.dir);
+        c.moving=true; c.anim+=dt*7; c.phase=Math.floor(c.anim)%4;
+      } else { c.moving=false; c.phase=0; }    // yanına varınca otur
+      c.wait=0;
+      continue;
+    }
+    // sahibi oyunda değil -> rastgele dolaş
+    if(c.wait>0){ c.wait-=dt; c.moving=false; c.phase=0; continue; }
+    const dx=c.tx-c.x, dy=c.ty-c.y, d=Math.hypot(dx,dy);
+    if(d<2){
+      c.wait = 0.6 + Math.random()*3.0;
+      c.tx = 16 + Math.random()*148;
+      c.ty = 250 + Math.random()*(VH-270);
+      c.moving=false; c.phase=0;
+      continue;
+    }
+    const sp=16;
+    c.x += dx/d*sp*dt; c.y += dy/d*sp*dt;
+    c.dir = dx>0.3?1:(dx<-0.3?-1:c.dir);
+    c.moving=true; c.anim+=dt*6; c.phase=Math.floor(c.anim)%4;
+  }
+}
 
 //=================== canvas setup ===================
 const cv = document.getElementById("cv");
@@ -672,13 +784,102 @@ function drawPerson(role,x,y,phase,moving){
   if(role==="girl") drawGirl(x,y,phase,moving); else drawBoy(x,y,phase,moving);
 }
 
+// küçük piksel kedi (yan profil); y = ayak hizası
+function drawCat(c){
+  const x=Math.round(c.x), y=Math.round(c.y), d=c.dir||1;
+  const body=c.body, dark=c.dark, eye=c.eye;
+  shadowEllipse(x,y);
+  // kuyruk (hafif sallanır)
+  const ts=Math.sin(performance.now()*0.005 + c.seed)*1.5;
+  px(x-d*5, y-7, 2, 2, body);
+  px(x-d*6, y-8+ts, 2, 2, body);
+  px(x-d*6, y-10+ts, 2, 2, body);
+  // bacaklar (yürürken hafif alternatif)
+  const sw=c.moving&&(c.phase%2)?1:0;
+  px(x-d*2, y-2, 2, 2, dark);
+  px(x+d*2, y-2-sw, 2, 2, dark);
+  // gövde
+  px(x-3, y-7, 8, 5, body);
+  if(c.belly) px(x-2, y-4, 6, 2, c.belly);     // beyaz karın (turuncu kedi)
+  if(c.stripe){ px(x-1,y-7,1,4,dark); px(x+1,y-7,1,4,dark); px(x+3,y-7,1,4,dark); } // tekir çizgileri
+  // kafa
+  const hx=x+d*4;
+  px(hx-2, y-11, 6, 5, body);
+  px(hx-2, y-12, 2, 2, body); px(hx+2, y-12, 2, 2, body);   // kulaklar
+  px(hx-1, y-12, 1, 1, dark); px(hx+3, y-12, 1, 1, dark);
+  px(hx, y-9, 1, 1, eye); px(hx+2, y-9, 1, 1, eye);          // gözler
+  px(hx+1, y-7, 1, 1, "#e7889e");                            // burun
+}
+
+// Kedi isimleri: tuval yerine net DOM etiketleri (okunaklı font)
+function initCatNames(){
+  const stage=document.getElementById("stage");
+  cats.forEach(c=>{
+    const el=document.createElement("div");
+    el.className="catname"; el.textContent=c.name; el.style.display="none";
+    stage.appendChild(el); c.el=el;
+  });
+}
+function positionCatNames(){
+  for(const c of cats){
+    if(!c.el) continue;
+    const p=stageToScreen(c.x, c.y-14);
+    c.el.style.left=p.sx+"px"; c.el.style.top=p.sy+"px";
+    c.el.style.display="block";
+  }
+}
+
+//=================== cat corner: kulübeler + mama/su ===================
+function careFull(kind){ return (Date.now()-(state.care[kind]||0)) < DAY; }
+function catKennel(x, base, roof, wall){
+  px(x+2, base, 14, 2, "rgba(70,50,30,.18)");      // gölge
+  px(x, base-12, 18, 12, wall);                     // gövde
+  px(x, base-12, 18, 1, "rgba(255,255,255,.18)");
+  px(x-2, base-16, 22, 4, roof);                    // çatı
+  px(x-1, base-18, 20, 3, roof);
+  px(x+6, base-9, 6, 9, "#241c16");                 // giriş
+  px(x+7, base-11, 4, 2, "#241c16");
+}
+function bowl(x, base, kind, full){
+  px(x, base-2, 8, 2, "#b98f57"); px(x+1, base-1, 6, 1, "#9c7544");   // kase
+  if(full){
+    if(kind==="food"){ px(x+1, base-3, 6, 1, "#8c5733"); px(x+2, base-4, 4, 1, "#a4683c"); }
+    else { px(x+1, base-3, 6, 1, "#7fc7e6"); px(x+2, base-4, 4, 1, "#aaddf2"); }
+  }
+}
+function drawCatCorner(){
+  catKennel(98, 198, "#3a3550", "#6f6a86");          // Miyav Muz'un kulübesi (koyu)
+  catKennel(122, 202, "#9a5a2a", "#caa06a");         // Psi Koz'un kulübesi (turuncu)
+  bowl(106, 207, "food", careFull("food"));
+  bowl(118, 209, "water", careFull("water"));
+}
+
+//=================== çim dokusu (Stardew tarzı) ===================
+let TUFTS=[];
+function makeTufts(){
+  TUFTS=[];
+  let s=1234567;
+  const rnd=()=>{ s=(s*1103515245+12345)&0x7fffffff; return s/0x7fffffff; };
+  for(let i=0;i<120;i++){
+    const x=4+rnd()*(VW-8), y=128+rnd()*(VH-132);
+    if(x>120 && y<170) continue;                     // gölet bölgesini atla
+    TUFTS.push({x,y, d:rnd()<0.5});
+  }
+}
+function drawTufts(){
+  for(const g of TUFTS){
+    const c=g.d?"#6fa24f":"#94ca74";
+    px(g.x, g.y, 1, 2, c); px(g.x-1, g.y+1, 1, 1, c); px(g.x+1, g.y+1, 1, 1, c);
+  }
+}
+
 //=================== garden generation ===================
 function makeGarden(){
   const shapes=Object.keys(FLOWER_TYPES);
   const spots=[];
   // scatter in foreground, avoid pond (right) and path
   let i=0;
-  for(let gy=190; gy<=300; gy+=22){
+  for(let gy=190; gy<=VH-24; gy+=22){
     for(let gx=16; gx<=164; gx+=26){
       const jitter=((gx*gy)%9)-4;
       const x=gx+jitter, y=gy+((gx%14)-6);
@@ -715,14 +916,17 @@ function render(t){
   // grass foreground
   px(0,124,VW,VH-124,"#7fb060");
   px(0,124,VW,4,"#8fc06e");
+  drawTufts();
   // path to door
-  for(let yy=170; yy<300; yy+=8){ px(56-(yy-170)*0.05, yy, 14+(yy-170)*0.1, 6, "#c7b079"); }
+  for(let yy=170; yy<VH-20; yy+=8){ px(56-(yy-170)*0.05, yy, 14+(yy-170)*0.1, 6, "#c7b079"); }
   drawTree(8,150); drawTree(170,200);
   const house=drawHouse(t);
 
   // collect drawables sorted by feet-y for depth
   const draws=[];
+  draws.push({y:201, fn:drawCatCorner});
   for(const f of state.garden){ if(f.present) draws.push({y:f.y, fn:()=>gardenFlower(f)}); }
+  for(const c of cats){ draws.push({y:c.y, fn:()=>drawCat(c)}); }
   // other player (if online)
   const online = (Date.now()-state.other.at) < PRES_TTL;
   if(online){
@@ -737,6 +941,7 @@ function render(t){
   const vase=drawVase(house,t);
   const mb=drawMailbox();
 
+  positionCatNames();      // net isim etiketleri (DOM)
   positionBadges(vase, mb);
 }
 
@@ -782,6 +987,7 @@ function fmtRemain(ms){
 //=================== interaction zones ===================
 function nearVase(){ const m=state.me; return m.x>=70 && m.x<=110 && m.y>=168 && m.y<=190; }
 function nearMail(){ const m=state.me; return m.x>=6 && m.x<=36 && m.y>=190 && m.y<=224; }
+function nearCats(){ const m=state.me; return m.x>=92 && m.x<=146 && m.y>=184 && m.y<=214; }
 function nearestFlower(){
   let best=null, bd=12;
   for(const f of state.garden){
@@ -796,6 +1002,7 @@ function updateHint(){
   let txt=null;
   if(nearVase()) txt="Vazoya çiçeklerini koyar mısın?";
   else if(nearMail()) txt="Posta kutusunu aç!";
+  else if(nearCats()) txt="🐾 Mama & su doldur";
   else if(nearestFlower()) txt="Çiçek topla";
   if(txt){ h.textContent=txt; h.classList.add("show"); }
   else h.classList.remove("show");
@@ -804,8 +1011,14 @@ function updateHint(){
 //=================== input ===================
 const keys={};
 let moveVec={x:0,y:0};
-addEventListener("keydown",e=>{ keys[e.key.toLowerCase()]=true; if(e.key===" "||e.key.toLowerCase()==="e"){doAction(); e.preventDefault();} });
-addEventListener("keyup",e=>{ keys[e.key.toLowerCase()]=false; });
+// Metin kutusuna (mektup) yazarken oyun tuşlarını yok say — yoksa
+// space ve "e" yazılamaz (Mac/iOS dahil).
+function isTyping(e){
+  const el=e.target;
+  return !!el && (el.tagName==="TEXTAREA" || el.tagName==="INPUT" || el.isContentEditable);
+}
+addEventListener("keydown",e=>{ if(isTyping(e)) return; keys[e.key.toLowerCase()]=true; if(e.key===" "||e.key.toLowerCase()==="e"){doAction(); e.preventDefault();} });
+addEventListener("keyup",e=>{ if(isTyping(e)) return; keys[e.key.toLowerCase()]=false; });
 
 // joystick
 const joy=document.getElementById("joy"), knob=document.getElementById("knob");
@@ -832,6 +1045,7 @@ function doAction(){
   if(document.querySelector(".scrim.open")) return;
   if(nearVase()){ openVase(); return; }
   if(nearMail()){ openMail(); return; }
+  if(nearCats()){ openCare(); return; }
   const f=nearestFlower();
   if(f){ pickFlower(f); }
 }
@@ -866,7 +1080,7 @@ function loop(now){
     state.me.y += vy*SPEED*dt;
     // walkable clamp
     state.me.x=Math.max(8,Math.min(172,state.me.x));
-    state.me.y=Math.max(168,Math.min(304,state.me.y));
+    state.me.y=Math.max(168,Math.min(VH-20,state.me.y));
     state.me.moving=true;
     state.faceDir = vx>0.1?1:(vx<-0.1?-1:state.faceDir);
     state.me._anim=(state.me._anim||0)+dt*8;
@@ -877,6 +1091,8 @@ function loop(now){
   // regrow garden
   const now2=Date.now();
   for(const f of state.garden){ if(!f.present && now2>=f.regrowAt) f.present=true; }
+  // kediler rastgele dolaşsın
+  updateCats(dt);
   // lerp other player toward target
   state.other.x += (state.other.tx-state.other.x)*Math.min(1,dt*6);
   state.other.y += (state.other.ty-state.other.y)*Math.min(1,dt*6);
@@ -895,9 +1111,10 @@ async function pollSync(){
   // partner presence
   const op=await getJSON(otherKey(), true, null);
   if(op){ state.other.tx=op.x; state.other.ty=op.y; state.other.phase=op.phase||0; state.other.at=op.at||0; }
-  // shared vase + mail
+  // shared vase + mail + kedi bakımı
   state.vase = await getJSON("shared_vase", true, {flowers:[]});
   state.mail = await getJSON("shared_mailbox", true, {letters:[]});
+  state.care = await getJSON("shared_care", true, {food:0,water:0});
   // presence indicator
   const online=(Date.now()-(state.other.at||0))<PRES_TTL;
   document.getElementById("pdot").classList.toggle("on",online);
@@ -905,6 +1122,7 @@ async function pollSync(){
   // refresh open modals
   if(document.getElementById("vaseScrim").classList.contains("open")) renderVase();
   if(document.getElementById("mailScrim").classList.contains("open")) renderMail();
+  if(document.getElementById("careScrim").classList.contains("open")) renderCare();
 }
 
 //=================== modals: vase ===================
@@ -921,8 +1139,9 @@ function renderVase(){
     const rem=info.life-(Date.now()-f.at);
     const c=document.createElement("div");
     c.className="vchip"+(wilt?" wilt":"");
-    c.title=info.name;
-    c.innerHTML=`<span class="em">${info.em}</span><span>${wilt?"🥀 soldu":fmtRemain(rem)}</span>`;
+    c.title=info.name+" — çıkarmak için dokun";
+    c.innerHTML=`<span class="rm">×</span><span class="em">${info.em}</span><span>${wilt?"🥀 soldu":fmtRemain(rem)}</span>`;
+    c.onclick=()=>removeFromVase(f);
     list.appendChild(c);
   });
   // inventory grouped
@@ -943,17 +1162,36 @@ function renderVase(){
 }
 async function placeFlower(f){
   if(state.vase.flowers.length>=14){ flash("Vazo dolu 🏺"); return; }
-  // remove one from inventory
-  const idx=state.inv.findIndex(x=>x.shape===f.shape && x.color===f.color);
+  // remove the exact item from inventory (referansla, yaşı korunsun)
+  let idx=state.inv.indexOf(f);
+  if(idx<0) idx=state.inv.findIndex(x=>x.shape===f.shape && x.color===f.color);
   if(idx<0) return;
-  state.inv.splice(idx,1); saveInv();
+  const [item]=state.inv.splice(idx,1); saveInv();
+  // Daha önce vazoda geçirdiği süre varsa onu koru (süre sıfırlanmaz)
+  const age=(item && item.age!=null)?item.age:0;
+  const at=Date.now()-age;
   // re-fetch latest shared, append, save (reduce overwrite races)
   const latest=await getJSON("shared_vase", true, {flowers:[]});
-  latest.flowers.push({shape:f.shape, color:f.color, by:state.role, at:Date.now()});
+  latest.flowers.push({shape:f.shape, color:f.color, by:state.role, at});
   if(latest.flowers.length>14) latest.flowers.shift();
   state.vase=latest;
   await setJSON("shared_vase", latest, true);
   renderVase();
+}
+// Vazodan tek çiçek çıkar — çantana geri koyar (hiçbir şey boşa gitmez)
+async function removeFromVase(f){
+  const latest=await getJSON("shared_vase", true, {flowers:[]});
+  const idx=latest.flowers.findIndex(x=>x.shape===f.shape && x.color===f.color && x.at===f.at && x.by===f.by);
+  if(idx<0){ renderVase(); return; }                 // başka cihaz çoktan çıkarmış
+  const [removed]=latest.flowers.splice(idx,1);
+  state.vase=latest;
+  await setJSON("shared_vase", latest, true);
+  // Geçen süreyi sakla ki geri konunca kaldığı yerden devam etsin
+  const age=Math.max(0, Date.now()-(removed.at||Date.now()));
+  state.inv.push({shape:removed.shape, color:removed.color, age});
+  saveInv();
+  renderVase();
+  flash("🌼 "+flowerInfo(removed).name+" çantana alındı");
 }
 document.getElementById("clearWilt").onclick=async()=>{
   const latest=await getJSON("shared_vase", true, {flowers:[]});
@@ -988,6 +1226,64 @@ document.getElementById("sendNote").onclick=async()=>{
   renderMail();
 };
 
+//=================== modal: çanta (yere bırak) ===================
+const bagScrim=document.getElementById("bagScrim");
+function openBag(){ bagScrim.classList.add("open"); renderBag(); }
+function renderBag(){
+  const grid=document.getElementById("bagGrid"); grid.innerHTML="";
+  const groups={};
+  state.inv.forEach(f=>{ const k=f.shape+"|"+f.color; groups[k]=groups[k]||{f, n:0}; groups[k].n++; });
+  const entries=Object.values(groups);
+  document.getElementById("bagEmpty").style.display=entries.length?"none":"block";
+  entries.forEach(g=>{
+    const info=flowerInfo(g.f);
+    const b=document.createElement("div"); b.className="inv";
+    b.innerHTML=`<div class="em">${info.em}</div><div class="ct">${g.n}</div>`;
+    b.title=info.name+" — yere bırak";
+    b.onclick=()=>dropFlower(g.f);
+    grid.appendChild(b);
+  });
+}
+function dropFlower(f){
+  const idx=state.inv.findIndex(x=>x.shape===f.shape && x.color===f.color);
+  if(idx<0) return;
+  state.inv.splice(idx,1); saveInv();
+  // oyuncunun bulunduğu yere, bahçeye düşür (tekrar toplanabilir)
+  const x=Math.max(10,Math.min(170, Math.round(state.me.x+(Math.random()*16-8))));
+  const y=Math.max(182,Math.min(VH-16, Math.round(state.me.y+6)));
+  state.garden.push({x, y, shape:f.shape, color:f.color, present:true, regrowAt:0, dropped:true});
+  renderBag();
+  flash("🌼 "+flowerInfo(f).name+" yere bırakıldı");
+}
+document.getElementById("bagBtn").onclick=openBag;
+
+//=================== modal: kedi bakımı (mama/su) ===================
+const careScrim=document.getElementById("careScrim");
+function openCare(){ careScrim.classList.add("open"); renderCare(); }
+function renderCare(){
+  const wrap=document.getElementById("careRows"); wrap.innerHTML="";
+  [["food","🍖 Mama"],["water","💧 Su"]].forEach(([kind,lbl])=>{
+    const at=state.care[kind]||0;
+    const rem=DAY-(Date.now()-at);
+    const full=rem>0 && at>0;
+    const row=document.createElement("div"); row.className="care-row";
+    row.innerHTML=`<span class="care-lbl">${lbl}</span>`
+      +`<span class="care-stat${full?"":" empty"}">${full?("dolu · "+fmtRemain(rem)+" kaldı"):"boş 🥣"}</span>`;
+    const btn=document.createElement("button");
+    btn.className="btn sm"; btn.textContent= full?"Tazele":"Doldur";
+    btn.onclick=()=>refill(kind);
+    row.appendChild(btn);
+    wrap.appendChild(row);
+  });
+}
+async function refill(kind){
+  const latest=await getJSON("shared_care", true, {food:0,water:0});
+  latest[kind]=Date.now();
+  state.care=latest; await setJSON("shared_care", latest, true);
+  renderCare();
+  flash((kind==="food"?"🍖 Mama":"💧 Su")+" dolduruldu 🐱");
+}
+
 // close buttons
 document.querySelectorAll("[data-close]").forEach(b=>{
   b.onclick=()=>document.getElementById(b.dataset.close).classList.remove("open");
@@ -1014,6 +1310,8 @@ document.querySelectorAll("#roleScrim .pick").forEach(p=>{
 async function boot(){
   sizeCanvas();
   makeGarden();
+  makeTufts();
+  initCatNames();
   state.inv = await getJSON("my_inventory", false, []);
   const r = await rawGet("my_role", false);
   if(r){ state.role=r; document.getElementById("whoami").textContent = r==="girl"?"👧 Ben":"🧑 Sevgilim";
